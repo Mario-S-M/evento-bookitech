@@ -38,16 +38,25 @@ export async function pushAsistenteToBookit(asistente: Asistente): Promise<strin
   const validationError = validatePayload(payload)
   if (validationError) throw new Error(validationError)
 
-  console.log("[Bookit] payload enviado:", JSON.stringify(payload, null, 2))
+  const formBody = new URLSearchParams({
+    nombre: payload.nombre,
+    telefono: String(payload.telefono),
+    correo: payload.correo,
+    contrasena: payload.contrasena,
+    codigoweb: payload.codigoweb,
+  })
+
+  console.log("[Bookit] payload (form):", formBody.toString())
+  console.log("[Bookit] payload (json):", JSON.stringify(payload, null, 2))
 
   const res = await fetch(BOOKIT_URL, {
     method: "POST",
     headers: {
       "Accept": "application/json",
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
       "Authorization": `Bearer ${BOOKIT_TOKEN}`,
     },
-    body: JSON.stringify(payload),
+    body: formBody.toString(),
   })
 
   const raw = await res.text().catch(() => "")
