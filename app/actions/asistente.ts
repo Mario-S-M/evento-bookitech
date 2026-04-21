@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { asistenteSaveSchema, type AsistenteSave } from "@/lib/validators/asistente"
-import { createAsistente, updateAsistente } from "@/lib/repositories/asistente"
+import { createAsistente, updateAsistente, setAsistencia } from "@/lib/repositories/asistente"
 import { pushAsistenteToBookit } from "@/lib/services/bookit"
 import type { Asistente } from "@/db/schema"
 
@@ -46,6 +46,19 @@ export async function createAsistenteAction(
     return { success: true, data: asistente, bookit }
   } catch {
     return { success: false, error: "Error al crear el asistente" }
+  }
+}
+
+export async function setAsistenciaAction(
+  id: number,
+  value: boolean | null
+): Promise<{ success: boolean }> {
+  try {
+    await setAsistencia(id, value)
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch {
+    return { success: false }
   }
 }
 

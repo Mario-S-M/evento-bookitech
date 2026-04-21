@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, Fragment } from "react"
+import { useState, useMemo, Fragment, useTransition } from "react"
 import {
   Table,
   TableBody,
@@ -20,9 +20,11 @@ import {
 } from "@/components/ui/pagination"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { SearchIcon, MailIcon, PhoneIcon, SchoolIcon, BriefcaseIcon } from "lucide-react"
+import { SearchIcon, MailIcon, PhoneIcon, SchoolIcon, BriefcaseIcon, CheckIcon, XIcon, ClockIcon } from "lucide-react"
 import { AsistenteDialog, AsistenteTriggerButton } from "@/components/dashboard/asistente-dialog"
+import { setAsistenciaAction } from "@/app/actions/asistente"
 import type { Asistente } from "@/db/schema"
 
 const PAGE_SIZE = 10
@@ -91,6 +93,71 @@ function buildPageWindow(current: number, total: number): (number | "...")[] {
   if (current < total - 2) pages.push("...")
   pages.push(total)
   return pages
+}
+
+// ── Botón de asistencia ────────────────────────────────────────────────────────
+function AsistenciaButton({ asistente }: { asistente: Asistente }) {
+  const [status, setStatus] = useState<boolean | null>(asistente.asistio ?? null)
+  const [isPending, startTransition] = useTransition()
+
+  function next(current: boolean | null): boolean | null {
+    if (current === null) return true
+    if (current === true) return false
+    return null
+  }
+
+  function handleClick() {
+    const current = status
+    const nextVal = next(current)
+    startTransition(async () => {
+      setStatus(nextVal)
+      const result = await setAsistenciaAction(asistente.id, nextVal)
+      if (!result.success) setStatus(current)
+    })
+  }
+
+  if (status === true) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:hover:bg-green-950 gap-1.5 h-7 px-2 text-xs"
+        disabled={isPending}
+        onClick={handleClick}
+      >
+        <CheckIcon className="size-3" />
+        Asistió
+      </Button>
+    )
+  }
+
+  if (status === false) {
+    return (
+      <Button
+        size="sm"
+        variant="outline"
+        className="border-red-500 text-red-600 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950 gap-1.5 h-7 px-2 text-xs"
+        disabled={isPending}
+        onClick={handleClick}
+      >
+        <XIcon className="size-3" />
+        No asistió
+      </Button>
+    )
+  }
+
+  return (
+    <Button
+      size="sm"
+      variant="outline"
+      className="text-muted-foreground gap-1.5 h-7 px-2 text-xs"
+      disabled={isPending}
+      onClick={handleClick}
+    >
+      <ClockIcon className="size-3" />
+      Pendiente
+    </Button>
+  )
 }
 
 // ── Vista de escuelas agrupadas ────────────────────────────────────────────────
@@ -191,6 +258,9 @@ function AsistenteCard({ asistente, onEdit }: { asistente: Asistente; onEdit: ()
             <span>{asistente.whatsApp}</span>
           </div>
         )}
+      </div>
+      <div className="pt-1 border-t">
+        <AsistenciaButton asistente={asistente} />
       </div>
     </div>
   )
@@ -303,13 +373,14 @@ export function AsistentesTable({ data }: Props) {
                   <TableHead className="px-3">Cargo</TableHead>
                   <TableHead className="px-3">Correo</TableHead>
                   <TableHead className="px-3">WhatsApp</TableHead>
+                  <TableHead className="px-3">Asistencia</TableHead>
                   <TableHead className="w-10 px-3" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginated.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-28 text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={8} className="h-28 text-center text-sm text-muted-foreground">
                       {search ? "Sin resultados." : "No hay asistentes en esta categoría."}
                     </TableCell>
                   </TableRow>
@@ -324,6 +395,9 @@ export function AsistentesTable({ data }: Props) {
                       <TableCell className="px-3 text-sm whitespace-nowrap">{asistente.cargo ?? "—"}</TableCell>
                       <TableCell className="px-3 text-sm">{asistente.correo ?? "—"}</TableCell>
                       <TableCell className="px-3 text-sm whitespace-nowrap">{asistente.whatsApp ?? "—"}</TableCell>
+                      <TableCell className="px-3">
+                        <AsistenciaButton asistente={asistente} />
+                      </TableCell>
                       <TableCell className="px-3">
                         <AsistenteTriggerButton
                           asistente={asistente}

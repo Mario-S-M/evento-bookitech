@@ -20,6 +20,7 @@ export const asistencia = pgTable("asistencia", {
   seleccionDeLibrosYMateriales: boolean("Selección de libros y materiales"),
   ventaYDistribucionDeMaterialesEscolares: boolean("Venta y distribución de materiales escolares"),
   lugar: text("Lugar"),
+  asistio: boolean("asistio"),
 })
 
 export type Asistente = typeof asistencia.$inferSelect

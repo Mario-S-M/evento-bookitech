@@ -32,6 +32,13 @@ export async function createAsistente(data: AsistenteSave): Promise<Asistente> {
   return row
 }
 
+export async function setAsistencia(id: number, value: boolean | null): Promise<void> {
+  await getDb()
+    .update(asistencia)
+    .set({ asistio: value })
+    .where(eq(asistencia.id, id))
+}
+
 export async function updateAsistente(id: number, data: AsistenteSave): Promise<Asistente> {
   const [row] = await getDb()
     .update(asistencia)
