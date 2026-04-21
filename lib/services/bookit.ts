@@ -19,7 +19,7 @@ function buildPayload(asistente: Asistente): BookitPayload {
     nombre: nombreCompleto,
     telefono,
     correo: asistente.correo ?? "",
-    contrasena: asistente.whatsApp ?? "",  // TODO: confirmar valor de contrasena
+    contrasena: "demo123",
     codigoweb: "DEMO26",
   }
 }
