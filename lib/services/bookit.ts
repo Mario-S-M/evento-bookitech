@@ -16,6 +16,7 @@ type BookitPayload = {
   escuela: string
   cargo: string
   cargoOtro: string
+  codigoweb: string
   intereses: string[]
   correo: string
   whatsapp: string
@@ -43,6 +44,7 @@ function buildPayload(asistente: Asistente): BookitPayload {
     escuela: asistente.escuela ?? "",
     cargo: asistente.cargo ?? "",
     cargoOtro: "",
+    codigoweb: "DEMO26",
     intereses: buildIntereses(asistente),
     correo: asistente.correo ?? "",
     whatsapp: asistente.whatsApp ?? "",
