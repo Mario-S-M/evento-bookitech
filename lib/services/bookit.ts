@@ -13,7 +13,8 @@ type BookitPayload = {
 
 function buildPayload(asistente: Asistente): BookitPayload {
   const nombreCompleto = [asistente.nombre, asistente.apellido].filter(Boolean).join(" ")
-  const telefono = parseInt((asistente.whatsApp ?? "0").replace(/\D/g, ""), 10)
+  const digitosPhone = (asistente.whatsApp ?? "").replace(/\D/g, "")
+  const telefono = digitosPhone ? parseInt(digitosPhone, 10) : 0
 
   return {
     nombre: nombreCompleto,
@@ -24,8 +25,18 @@ function buildPayload(asistente: Asistente): BookitPayload {
   }
 }
 
+function validatePayload(payload: BookitPayload): string | null {
+  if (!payload.nombre.trim()) return "El nombre del asistente es requerido"
+  if (!payload.correo.trim()) return "El correo es requerido para sincronizar con Bookit"
+  if (!payload.telefono) return "El WhatsApp es requerido para sincronizar con Bookit"
+  return null
+}
+
 export async function pushAsistenteToBookit(asistente: Asistente): Promise<string> {
   const payload = buildPayload(asistente)
+
+  const validationError = validatePayload(payload)
+  if (validationError) throw new Error(validationError)
 
   console.log("[Bookit] payload enviado:", JSON.stringify(payload, null, 2))
 

@@ -27,6 +27,13 @@ type Props = {
   onOpenChange: (open: boolean) => void
 }
 
+function formatPhone(digits: string): string {
+  const d = digits.replace(/\D/g, "").slice(0, 10)
+  if (d.length <= 3) return d
+  if (d.length <= 6) return `(${d.slice(0, 3)}) ${d.slice(3)}`
+  return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`
+}
+
 const EMPTY_VALUES: AsistenteSave = {
   nombre: "",
   apellido: "",
@@ -145,7 +152,20 @@ export function AsistenteDialog({ asistente, open, onOpenChange }: Props) {
 
             <div className="space-y-1.5">
               <Label htmlFor="whatsApp">WhatsApp</Label>
-              <Input id="whatsApp" {...register("whatsApp")} placeholder="771 123 4567" />
+              <Controller
+                control={control}
+                name="whatsApp"
+                render={({ field }) => (
+                  <Input
+                    id="whatsApp"
+                    type="tel"
+                    placeholder="(442) 123-4567"
+                    value={formatPhone(field.value ?? "")}
+                    onChange={(e) => field.onChange(e.target.value.replace(/\D/g, ""))}
+                    onBlur={field.onBlur}
+                  />
+                )}
+              />
             </div>
 
             <div className="space-y-1.5">
