@@ -1,0 +1,118 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.asistencia": {
+      "name": "asistencia",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "asistencia_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "Nombre": {
+          "name": "Nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Apellido": {
+          "name": "Apellido",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Escuela": {
+          "name": "Escuela",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Cargo": {
+          "name": "Cargo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Correo": {
+          "name": "Correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "WhatsApp": {
+          "name": "WhatsApp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Bienestar socioemocional / bullying": {
+          "name": "Bienestar socioemocional / bullying",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Asesoramiento Académico": {
+          "name": "Asesoramiento Académico",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Selección de libros y materiales": {
+          "name": "Selección de libros y materiales",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Venta y distribución de materiales escolares": {
+          "name": "Venta y distribución de materiales escolares",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Lugar": {
+          "name": "Lugar",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}
