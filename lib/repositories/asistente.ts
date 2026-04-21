@@ -1,19 +1,19 @@
 import { eq } from "drizzle-orm"
-import { db } from "@/db"
+import { getDb } from "@/db"
 import { asistencia, type Asistente } from "@/db/schema"
 import type { AsistenteSave } from "@/lib/validators/asistente"
 
 export async function getAllAsistentes(): Promise<Asistente[]> {
-  return db.select().from(asistencia).orderBy(asistencia.id)
+  return getDb().select().from(asistencia).orderBy(asistencia.id)
 }
 
 export async function getAsistenteById(id: number): Promise<Asistente | undefined> {
-  const [row] = await db.select().from(asistencia).where(eq(asistencia.id, id))
+  const [row] = await getDb().select().from(asistencia).where(eq(asistencia.id, id))
   return row
 }
 
 export async function createAsistente(data: AsistenteSave): Promise<Asistente> {
-  const [row] = await db
+  const [row] = await getDb()
     .insert(asistencia)
     .values({
       nombre: data.nombre,
@@ -33,7 +33,7 @@ export async function createAsistente(data: AsistenteSave): Promise<Asistente> {
 }
 
 export async function updateAsistente(id: number, data: AsistenteSave): Promise<Asistente> {
-  const [row] = await db
+  const [row] = await getDb()
     .update(asistencia)
     .set({
       nombre: data.nombre,
