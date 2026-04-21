@@ -86,6 +86,9 @@ export function AsistenteDialog({ asistente, open, onOpenChange }: Props) {
 
       if (result.success) {
         toast.success(isEditing ? "Asistente actualizado" : "Asistente creado")
+        if (result.bookitWarning) {
+          toast.warning(`Guardado, pero no se pudo sincronizar con Bookit: ${result.bookitWarning}`)
+        }
         onOpenChange(false)
       } else {
         toast.error(result.error)
