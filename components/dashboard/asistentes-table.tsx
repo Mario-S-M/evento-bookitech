@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, Fragment } from "react"
 import {
   Table,
   TableBody,
@@ -120,9 +120,8 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
             </TableRow>
           ) : (
             filtered.map((row) => (
-              <>
+              <Fragment key={row.escuela}>
                 <TableRow
-                  key={row.escuela}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => setExpanded(expanded === row.escuela ? null : row.escuela)}
                 >
@@ -132,7 +131,7 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
                   </TableCell>
                 </TableRow>
                 {expanded === row.escuela && (
-                  <TableRow key={`${row.escuela}-expanded`} className="bg-muted/30">
+                  <TableRow className="bg-muted/30">
                     <TableCell colSpan={2} className="px-6 py-2">
                       <ul className="space-y-1">
                         {row.asistentes.map((a) => (
@@ -146,7 +145,7 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))
           )}
         </TableBody>
