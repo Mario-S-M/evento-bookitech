@@ -60,6 +60,8 @@ function buildPayload(asistente: Asistente): BookitPayload {
 export async function pushAsistenteToBookit(asistente: Asistente): Promise<string> {
   const payload = buildPayload(asistente)
 
+  console.log("[Bookit] payload enviado:", JSON.stringify(payload, null, 2))
+
   const res = await fetch(BOOKIT_URL, {
     method: "POST",
     headers: {
