@@ -6,18 +6,22 @@ import { createAsistente, updateAsistente } from "@/lib/repositories/asistente"
 import { pushAsistenteToBookit } from "@/lib/services/bookit"
 import type { Asistente } from "@/db/schema"
 
+type BookitResult =
+  | { ok: true; response: string }
+  | { ok: false; error: string }
+
 type ActionResult<T> =
-  | { success: true; data: T; bookitWarning?: string }
+  | { success: true; data: T; bookit: BookitResult }
   | { success: false; error: string }
 
-async function syncToBookit(asistente: Asistente): Promise<string | undefined> {
+async function syncToBookit(asistente: Asistente): Promise<BookitResult> {
   try {
-    await pushAsistenteToBookit(asistente)
-    return undefined
+    const response = await pushAsistenteToBookit(asistente)
+    return { ok: true, response }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error desconocido"
-    console.error("[Bookit sync]", message)
-    return message
+    const error = err instanceof Error ? err.message : "Error desconocido"
+    console.error("[Bookit sync]", error)
+    return { ok: false, error }
   }
 }
 
@@ -32,8 +36,8 @@ export async function createAsistenteAction(
   try {
     const asistente = await createAsistente(parsed.data)
     revalidatePath("/dashboard")
-    const bookitWarning = await syncToBookit(asistente)
-    return { success: true, data: asistente, bookitWarning }
+    const bookit = await syncToBookit(asistente)
+    return { success: true, data: asistente, bookit }
   } catch {
     return { success: false, error: "Error al crear el asistente" }
   }
@@ -51,8 +55,8 @@ export async function updateAsistenteAction(
   try {
     const asistente = await updateAsistente(id, parsed.data)
     revalidatePath("/dashboard")
-    const bookitWarning = await syncToBookit(asistente)
-    return { success: true, data: asistente, bookitWarning }
+    const bookit = await syncToBookit(asistente)
+    return { success: true, data: asistente, bookit }
   } catch {
     return { success: false, error: "Error al actualizar el asistente" }
   }

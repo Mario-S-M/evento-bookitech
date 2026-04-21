@@ -55,7 +55,7 @@ function buildPayload(asistente: Asistente): BookitPayload {
   }
 }
 
-export async function pushAsistenteToBookit(asistente: Asistente): Promise<void> {
+export async function pushAsistenteToBookit(asistente: Asistente): Promise<string> {
   const payload = buildPayload(asistente)
 
   const res = await fetch(BOOKIT_URL, {
@@ -68,8 +68,19 @@ export async function pushAsistenteToBookit(asistente: Asistente): Promise<void>
     body: JSON.stringify(payload),
   })
 
-  if (!res.ok) {
-    const body = await res.text().catch(() => "")
-    throw new Error(`Bookit API error ${res.status}: ${body}`)
+  const raw = await res.text().catch(() => "")
+
+  let message: string
+  try {
+    const json = JSON.parse(raw) as Record<string, unknown>
+    message = JSON.stringify(json, null, 2)
+  } catch {
+    message = raw
   }
+
+  if (!res.ok) {
+    throw new Error(`[${res.status}] ${message}`)
+  }
+
+  return message
 }
