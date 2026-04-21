@@ -6,8 +6,11 @@ import { createAsistente, updateAsistente } from "@/lib/repositories/asistente"
 import { pushAsistenteToBookit } from "@/lib/services/bookit"
 import type { Asistente } from "@/db/schema"
 
+const BOOKIT_ALREADY_EXISTS = "La cuenta ya esta registrada"
+
 type BookitResult =
   | { ok: true; response: string }
+  | { ok: "already_exists"; message: string }
   | { ok: false; error: string }
 
 type ActionResult<T> =
@@ -21,6 +24,9 @@ async function syncToBookit(asistente: Asistente): Promise<BookitResult> {
   } catch (err) {
     const error = err instanceof Error ? err.message : "Error desconocido"
     console.error("[Bookit sync]", error)
+    if (error.includes(BOOKIT_ALREADY_EXISTS)) {
+      return { ok: "already_exists", message: "El usuario ya estaba registrado en Bookit" }
+    }
     return { ok: false, error }
   }
 }

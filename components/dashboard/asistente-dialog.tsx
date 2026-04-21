@@ -93,10 +93,12 @@ export function AsistenteDialog({ asistente, open, onOpenChange }: Props) {
 
       if (result.success) {
         toast.success(isEditing ? "Asistente actualizado" : "Asistente creado")
-        if (result.bookit.ok) {
+        if (result.bookit.ok === true) {
           toast.success(`Bookit: ${result.bookit.response}`, { duration: 8000 })
+        } else if (result.bookit.ok === "already_exists") {
+          toast.info(`Bookit: ${result.bookit.message}`, { duration: 6000 })
         } else {
-          toast.warning(`Bookit (error): ${result.bookit.error}`, { duration: 8000 })
+          toast.warning(`Bookit error: ${result.bookit.error}`, { duration: 8000 })
         }
         onOpenChange(false)
       } else {
