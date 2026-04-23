@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, Fragment, useTransition } from "react"
+import { useState, useMemo, Fragment, useTransition, useRef, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -325,11 +325,113 @@ function AsistenteCard({ asistente, onEdit }: { asistente: Asistente; onEdit: ()
   )
 }
 
+// ── Filtro de escuela con buscador ────────────────────────────────────────────
+type SchoolOption = { key: string; label: string }
+
+function EscuelaFilter({
+  schools,
+  value,
+  onChange,
+}: {
+  schools: SchoolOption[]
+  value: string | null
+  onChange: (key: string | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+        setQuery("")
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown)
+    return () => document.removeEventListener("mousedown", onMouseDown)
+  }, [])
+
+  const visibleSchools = useMemo(() => {
+    const q = normalize(query)
+    return q ? schools.filter((s) => normalize(s.label).includes(q)) : schools
+  }, [schools, query])
+
+  const selected = schools.find((s) => s.key === value)
+
+  function pick(key: string | null) {
+    onChange(key)
+    setOpen(false)
+    setQuery("")
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-9 gap-1.5 justify-between"
+        onClick={() => setOpen((o) => !o)}
+      >
+        <SchoolIcon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="max-w-[140px] truncate text-sm">
+          {selected ? selected.label : "Escuela"}
+        </span>
+        {value && (
+          <span
+            className="ml-1 flex items-center"
+            onClick={(e) => { e.stopPropagation(); pick(null) }}
+          >
+            <XIcon className="size-3.5 text-muted-foreground hover:text-foreground" />
+          </span>
+        )}
+      </Button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-xl border bg-popover text-popover-foreground shadow-md">
+          <div className="p-2 border-b">
+            <Input
+              autoFocus
+              className="h-8 text-sm"
+              placeholder="Buscar escuela..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
+          <div className="max-h-60 overflow-y-auto py-1">
+            {visibleSchools.length === 0 ? (
+              <p className="px-3 py-4 text-center text-sm text-muted-foreground">Sin resultados.</p>
+            ) : (
+              visibleSchools.map((s) => (
+                <button
+                  key={s.key}
+                  className={[
+                    "w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center gap-2",
+                    value === s.key ? "bg-muted font-medium" : "hover:bg-muted/50",
+                  ].join(" ")}
+                  onClick={() => pick(s.key)}
+                >
+                  {value === s.key
+                    ? <CheckIcon className="size-3.5 shrink-0" />
+                    : <span className="size-3.5 shrink-0" />
+                  }
+                  {s.label}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Componente principal ───────────────────────────────────────────────────────
 export function AsistentesTable({ data }: Props) {
   const [search, setSearch] = useState("")
   const [tab, setTab] = useState<TabValue>("todos")
   const [page, setPage] = useState(1)
+  const [escuelaFilter, setEscuelaFilter] = useState<string | null>(null)
   const [selectedAsistente, setSelectedAsistente] = useState<Asistente | undefined>(undefined)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -352,18 +454,33 @@ export function AsistentesTable({ data }: Props) {
     return []
   }, [tab, queretaroData, moreliaData])
 
+  const schoolOptions = useMemo<SchoolOption[]>(() => {
+    const base = data.filter((a) => matchesTab(a, tab))
+    const seen = new Map<string, string>()
+    for (const a of base) {
+      const raw = a.escuela?.trim() ?? ""
+      if (!raw) continue
+      const key = normalize(raw)
+      if (!seen.has(key)) seen.set(key, toTitleCase(raw))
+    }
+    return Array.from(seen.entries())
+      .map(([key, label]) => ({ key, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, "es"))
+  }, [data, tab])
+
   const filtered = useMemo(() => {
     let result = data.filter((a) => matchesTab(a, tab))
+    if (escuelaFilter) result = result.filter((a) => normalize(a.escuela?.trim() ?? "") === escuelaFilter)
     if (search.trim()) result = result.filter((a) => matchesSearch(a, search))
     return result
-  }, [data, tab, search])
+  }, [data, tab, search, escuelaFilter])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage   = Math.min(page, totalPages)
   const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
   const pageWindow = buildPageWindow(safePage, totalPages)
 
-  function changeTab(v: TabValue) { setTab(v); setPage(1); setSearch("") }
+  function changeTab(v: TabValue) { setTab(v); setPage(1); setSearch(""); setEscuelaFilter(null) }
 
   function handleEdit(asistente: Asistente) {
     setSelectedAsistente(asistente)
@@ -400,14 +517,23 @@ export function AsistentesTable({ data }: Props) {
         )}
       </div>
 
-      <div className="relative w-full max-w-xs">
-        <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-        <Input
-          className="pl-8"
-          placeholder={isEscuelasTab ? "Buscar escuela..." : "Buscar..."}
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative w-full max-w-xs">
+          <SearchIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          <Input
+            className="pl-8"
+            placeholder={isEscuelasTab ? "Buscar escuela..." : "Buscar..."}
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          />
+        </div>
+        {!isEscuelasTab && (
+          <EscuelaFilter
+            schools={schoolOptions}
+            value={escuelaFilter}
+            onChange={(k) => { setEscuelaFilter(k); setPage(1) }}
+          />
+        )}
       </div>
 
       {/* Vista escuelas */}
