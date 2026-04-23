@@ -42,8 +42,25 @@ const TAB_LABELS: Record<TabValue, string> = {
   "esc-morelia": "Esc. Morelia",
 }
 
+const TAB_LABELS_SHORT: Record<TabValue, string> = {
+  todos: "Todos",
+  queretaro: "Qro",
+  morelia: "Mor",
+  "esc-queretaro": "E.Qro",
+  "esc-morelia": "E.Mor",
+}
+
 function normalize(str: string): string {
   return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+}
+
+function toTitleCase(str: string): string {
+  return str
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ")
 }
 
 function isQueretaro(a: Asistente): boolean {
@@ -74,14 +91,15 @@ function matchesSearch(asistente: Asistente, query: string): boolean {
 }
 
 function groupByEscuela(asistentes: Asistente[]): EscuelaRow[] {
-  const map = new Map<string, Asistente[]>()
+  const map = new Map<string, { display: string; items: Asistente[] }>()
   for (const a of asistentes) {
-    const key = a.escuela?.trim() || "(Sin escuela)"
-    if (!map.has(key)) map.set(key, [])
-    map.get(key)!.push(a)
+    const raw = a.escuela?.trim() ?? ""
+    const key = raw ? normalize(raw) : "\x00"
+    if (!map.has(key)) map.set(key, { display: raw ? toTitleCase(raw) : "(Sin escuela)", items: [] })
+    map.get(key)!.items.push(a)
   }
-  return Array.from(map.entries())
-    .map(([escuela, asistentes]) => ({ escuela, total: asistentes.length, asistentes }))
+  return Array.from(map.values())
+    .map(({ display, items }) => ({ escuela: display, total: items.length, asistentes: items }))
     .sort((a, b) => b.total - a.total)
 }
 
@@ -169,55 +187,96 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
     return q ? rows.filter((r) => normalize(r.escuela).includes(q)) : rows
   }, [rows, search])
 
+  function toggle(escuela: string) {
+    setExpanded((prev) => (prev === escuela ? null : escuela))
+  }
+
+  const emptyMsg = search ? "Sin resultados." : "No hay escuelas registradas."
+
   return (
-    <div className="rounded-xl border overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="px-3">Escuela</TableHead>
-            <TableHead className="px-3 w-24 text-center">Asistentes</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filtered.length === 0 ? (
+    <>
+      {/* ── Tabla desktop ── */}
+      <div className="hidden md:block rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={2} className="h-24 text-center text-sm text-muted-foreground">
-                {search ? "Sin resultados." : "No hay escuelas registradas."}
-              </TableCell>
+              <TableHead className="px-3">Escuela</TableHead>
+              <TableHead className="px-3 w-24 text-center">Asistentes</TableHead>
             </TableRow>
-          ) : (
-            filtered.map((row) => (
-              <Fragment key={row.escuela}>
-                <TableRow
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => setExpanded(expanded === row.escuela ? null : row.escuela)}
-                >
-                  <TableCell className="px-3 text-sm font-medium">{row.escuela}</TableCell>
-                  <TableCell className="px-3 text-center">
-                    <Badge variant="secondary">{row.total}</Badge>
-                  </TableCell>
-                </TableRow>
-                {expanded === row.escuela && (
-                  <TableRow className="bg-muted/30">
-                    <TableCell colSpan={2} className="px-6 py-2">
-                      <ul className="space-y-1">
-                        {row.asistentes.map((a) => (
-                          <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
-                            <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                            {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
-                            {a.cargo && <span className="text-xs">· {a.cargo}</span>}
-                          </li>
-                        ))}
-                      </ul>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={2} className="h-24 text-center text-sm text-muted-foreground">
+                  {emptyMsg}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((row) => (
+                <Fragment key={row.escuela}>
+                  <TableRow
+                    className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => toggle(row.escuela)}
+                  >
+                    <TableCell className="px-3 text-sm font-medium">{row.escuela}</TableCell>
+                    <TableCell className="px-3 text-center">
+                      <Badge variant="secondary">{row.total}</Badge>
                     </TableCell>
                   </TableRow>
-                )}
-              </Fragment>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+                  {expanded === row.escuela && (
+                    <TableRow className="bg-muted/30">
+                      <TableCell colSpan={2} className="px-6 py-2">
+                        <ul className="space-y-1">
+                          {row.asistentes.map((a) => (
+                            <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
+                              <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                              {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
+                              {a.cargo && <span className="text-xs">· {a.cargo}</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </Fragment>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* ── Cards móvil ── */}
+      <div className="md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-10">{emptyMsg}</p>
+        ) : (
+          filtered.map((row) => (
+            <div key={row.escuela} className="rounded-xl border bg-card overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+                onClick={() => toggle(row.escuela)}
+              >
+                <span className="text-sm font-medium">{row.escuela}</span>
+                <Badge variant="secondary">{row.total}</Badge>
+              </button>
+              {expanded === row.escuela && (
+                <div className="border-t bg-muted/30 px-4 pb-3 pt-2">
+                  <ul className="space-y-1">
+                    {row.asistentes.map((a) => (
+                      <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
+                        <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                        {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
+                        {a.cargo && <span className="text-xs">· {a.cargo}</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </>
   )
 }
 
@@ -324,7 +383,8 @@ export function AsistentesTable({ data }: Props) {
           <TabsList>
             {(Object.keys(TAB_LABELS) as TabValue[]).map((key) => (
               <TabsTrigger key={key} value={key}>
-                {TAB_LABELS[key]}
+                <span className="hidden sm:inline">{TAB_LABELS[key]}</span>
+                <span className="sm:hidden">{TAB_LABELS_SHORT[key]}</span>
                 <span className="ml-1.5 rounded-full bg-muted-foreground/15 px-1.5 py-0.5 text-xs tabular-nums">
                   {tabCounts[key]}
                 </span>
