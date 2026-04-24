@@ -477,7 +477,7 @@ export function AsistentesTable({ data }: Props) {
 
   const asistenciaStats = useMemo(() => ({
     asistio:   filtered.filter((a) => a.asistio === true).length,
-    noAsistio: filtered.filter((a) => a.asistio === false).length,
+    noAsistio: filtered.filter((a) => a.asistio !== true).length,
   }), [filtered])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
