@@ -27,6 +27,7 @@ export async function createAsistente(data: AsistenteSave): Promise<Asistente> {
       seleccionDeLibrosYMateriales: data.seleccionDeLibrosYMateriales,
       ventaYDistribucionDeMaterialesEscolares: data.ventaYDistribucionDeMaterialesEscolares,
       lugar: data.lugar ?? null,
+      asistio: data.asistio ?? null,
     })
     .returning()
   return row
@@ -54,6 +55,7 @@ export async function updateAsistente(id: number, data: AsistenteSave): Promise<
       seleccionDeLibrosYMateriales: data.seleccionDeLibrosYMateriales,
       ventaYDistribucionDeMaterialesEscolares: data.ventaYDistribucionDeMaterialesEscolares,
       lugar: data.lugar ?? null,
+      asistio: data.asistio ?? null,
     })
     .where(eq(asistencia.id, id))
     .returning()

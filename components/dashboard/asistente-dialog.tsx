@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Switch } from "@/components/ui/switch"
 import { asistenteSaveSchema, type AsistenteSave } from "@/lib/validators/asistente"
 import { createAsistenteAction, updateAsistenteAction } from "@/app/actions/asistente"
 import type { Asistente } from "@/db/schema"
@@ -46,6 +47,7 @@ const EMPTY_VALUES: AsistenteSave = {
   seleccionDeLibrosYMateriales: false,
   ventaYDistribucionDeMaterialesEscolares: false,
   lugar: "",
+  asistio: null,
 }
 
 function toFormValues(asistente: Asistente): AsistenteSave {
@@ -61,6 +63,7 @@ function toFormValues(asistente: Asistente): AsistenteSave {
     seleccionDeLibrosYMateriales: asistente.seleccionDeLibrosYMateriales ?? false,
     ventaYDistribucionDeMaterialesEscolares: asistente.ventaYDistribucionDeMaterialesEscolares ?? false,
     lugar: asistente.lugar ?? "",
+    asistio: asistente.asistio ?? null,
   }
 }
 
@@ -235,6 +238,28 @@ export function AsistenteDialog({ asistente, open, onOpenChange }: Props) {
                 )}
               />
             </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border px-4 py-3">
+            <div className="space-y-0.5">
+              <Label htmlFor="asistio" className="text-sm font-medium cursor-pointer">
+                Asistencia
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Marca si el asistente ya se presentó al evento
+              </p>
+            </div>
+            <Controller
+              control={control}
+              name="asistio"
+              render={({ field }) => (
+                <Switch
+                  id="asistio"
+                  checked={field.value === true}
+                  onCheckedChange={(checked) => field.onChange(checked ? true : null)}
+                />
+              )}
+            />
           </div>
 
           <DialogFooter showCloseButton>

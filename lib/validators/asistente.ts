@@ -17,6 +17,7 @@ export const asistenteSaveSchema = z.object({
   seleccionDeLibrosYMateriales: z.boolean(),
   ventaYDistribucionDeMaterialesEscolares: z.boolean(),
   lugar: z.string().optional().nullable(),
+  asistio: z.boolean().nullable().optional(),
 })
 
 export type AsistenteSave = z.infer<typeof asistenteSaveSchema>
