@@ -226,12 +226,15 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
                   {expanded === row.escuela && (
                     <TableRow className="bg-muted/30">
                       <TableCell colSpan={2} className="px-6 py-2">
-                        <ul className="space-y-1">
+                        <ul className="space-y-1.5">
                           {row.asistentes.map((a) => (
                             <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
                               <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                              {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
-                              {a.cargo && <span className="text-xs">· {a.cargo}</span>}
+                              <span className="flex-1 min-w-0">
+                                {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
+                                {a.cargo && <span className="text-xs ml-1.5">· {a.cargo}</span>}
+                              </span>
+                              <AsistenciaButton asistente={a} />
                             </li>
                           ))}
                         </ul>
@@ -261,12 +264,15 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
               </button>
               {expanded === row.escuela && (
                 <div className="border-t bg-muted/30 px-4 pb-3 pt-2">
-                  <ul className="space-y-1">
+                  <ul className="space-y-2">
                     {row.asistentes.map((a) => (
                       <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
                         <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                        {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
-                        {a.cargo && <span className="text-xs">· {a.cargo}</span>}
+                        <span className="flex-1 min-w-0">
+                          {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
+                          {a.cargo && <span className="text-xs ml-1.5">· {a.cargo}</span>}
+                        </span>
+                        <AsistenciaButton asistente={a} />
                       </li>
                     ))}
                   </ul>
