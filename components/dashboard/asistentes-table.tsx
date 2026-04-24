@@ -475,6 +475,11 @@ export function AsistentesTable({ data }: Props) {
     return result
   }, [data, tab, search, escuelaFilter])
 
+  const asistenciaStats = useMemo(() => ({
+    asistio:   filtered.filter((a) => a.asistio === true).length,
+    noAsistio: filtered.filter((a) => a.asistio === false).length,
+  }), [filtered])
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage   = Math.min(page, totalPages)
   const paginated  = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
@@ -528,11 +533,23 @@ export function AsistentesTable({ data }: Props) {
           />
         </div>
         {!isEscuelasTab && (
-          <EscuelaFilter
-            schools={schoolOptions}
-            value={escuelaFilter}
-            onChange={(k) => { setEscuelaFilter(k); setPage(1) }}
-          />
+          <>
+            <EscuelaFilter
+              schools={schoolOptions}
+              value={escuelaFilter}
+              onChange={(k) => { setEscuelaFilter(k); setPage(1) }}
+            />
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="inline-flex items-center gap-1 rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-700 dark:border-green-800 dark:bg-green-950 dark:text-green-400">
+                <CheckIcon className="size-3" />
+                {asistenciaStats.asistio}
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+                <XIcon className="size-3" />
+                {asistenciaStats.noAsistio}
+              </span>
+            </div>
+          </>
         )}
       </div>
 
