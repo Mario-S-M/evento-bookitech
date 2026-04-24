@@ -193,6 +193,15 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
 
   const emptyMsg = search ? "Sin resultados." : "No hay escuelas registradas."
 
+  function getTemas(a: Asistente): string[] {
+    return [
+      a.bienestarSocioemocionalBullying && "Bienestar / Bullying",
+      a.asesoramientoAcademico && "Asesoramiento Acad.",
+      a.seleccionDeLibrosYMateriales && "Libros y materiales",
+      a.ventaYDistribucionDeMaterialesEscolares && "Venta de materiales",
+    ].filter(Boolean) as string[]
+  }
+
   return (
     <>
       {/* ── Tabla desktop ── */}
@@ -224,20 +233,55 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
                     </TableCell>
                   </TableRow>
                   {expanded === row.escuela && (
-                    <TableRow className="bg-muted/30">
-                      <TableCell colSpan={2} className="px-6 py-2">
-                        <ul className="space-y-1.5">
-                          {row.asistentes.map((a) => (
-                            <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
-                              <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                              <span className="flex-1 min-w-0">
-                                {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
-                                {a.cargo && <span className="text-xs ml-1.5">· {a.cargo}</span>}
-                              </span>
-                              <AsistenciaButton asistente={a} />
-                            </li>
-                          ))}
-                        </ul>
+                    <TableRow className="hover:bg-transparent">
+                      <TableCell colSpan={2} className="p-0">
+                        <div className="border-t">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                <TableHead className="h-8 px-3 text-xs w-10">#</TableHead>
+                                <TableHead className="h-8 px-3 text-xs">Nombre</TableHead>
+                                <TableHead className="h-8 px-3 text-xs">Cargo</TableHead>
+                                <TableHead className="h-8 px-3 text-xs">Correo</TableHead>
+                                <TableHead className="h-8 px-3 text-xs">WhatsApp</TableHead>
+                                <TableHead className="h-8 px-3 text-xs">Temas de interés</TableHead>
+                                <TableHead className="h-8 px-3 text-xs">Asistencia</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {row.asistentes.map((a) => {
+                                const temas = getTemas(a)
+                                return (
+                                  <TableRow key={a.id} className="hover:bg-muted/30 bg-muted/10">
+                                    <TableCell className="px-3 py-2 text-xs text-muted-foreground">{a.id}</TableCell>
+                                    <TableCell className="px-3 py-2 text-xs font-medium whitespace-nowrap">
+                                      {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
+                                    </TableCell>
+                                    <TableCell className="px-3 py-2 text-xs whitespace-nowrap">{a.cargo ?? "—"}</TableCell>
+                                    <TableCell className="px-3 py-2 text-xs">{a.correo ?? "—"}</TableCell>
+                                    <TableCell className="px-3 py-2 text-xs whitespace-nowrap">{a.whatsApp ?? "—"}</TableCell>
+                                    <TableCell className="px-3 py-2">
+                                      {temas.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1">
+                                          {temas.map((t) => (
+                                            <Badge key={t} variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                              {t}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <span className="text-xs text-muted-foreground">—</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="px-3 py-2">
+                                      <AsistenciaButton asistente={a} />
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
@@ -263,19 +307,52 @@ function EscuelasView({ rows, search }: { rows: EscuelaRow[]; search: string }) 
                 <Badge variant="secondary">{row.total}</Badge>
               </button>
               {expanded === row.escuela && (
-                <div className="border-t bg-muted/30 px-4 pb-3 pt-2">
-                  <ul className="space-y-2">
-                    {row.asistentes.map((a) => (
-                      <li key={a.id} className="text-sm text-muted-foreground flex items-center gap-2">
-                        <span className="size-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
-                        <span className="flex-1 min-w-0">
-                          {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
-                          {a.cargo && <span className="text-xs ml-1.5">· {a.cargo}</span>}
-                        </span>
-                        <AsistenciaButton asistente={a} />
-                      </li>
-                    ))}
-                  </ul>
+                <div className="border-t divide-y">
+                  {row.asistentes.map((a) => {
+                    const temas = getTemas(a)
+                    return (
+                      <div key={a.id} className="px-4 py-3 bg-muted/20 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-medium leading-tight">
+                              {[a.nombre, a.apellido].filter(Boolean).join(" ") || "—"}
+                            </p>
+                            <p className="text-xs text-muted-foreground">#{a.id}</p>
+                          </div>
+                          <AsistenciaButton asistente={a} />
+                        </div>
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          {a.cargo && (
+                            <div className="flex items-center gap-1.5">
+                              <BriefcaseIcon className="size-3 shrink-0" />
+                              {a.cargo}
+                            </div>
+                          )}
+                          {a.correo && (
+                            <div className="flex items-center gap-1.5">
+                              <MailIcon className="size-3 shrink-0" />
+                              {a.correo}
+                            </div>
+                          )}
+                          {a.whatsApp && (
+                            <div className="flex items-center gap-1.5">
+                              <PhoneIcon className="size-3 shrink-0" />
+                              {a.whatsApp}
+                            </div>
+                          )}
+                        </div>
+                        {temas.length > 0 && (
+                          <div className="flex flex-wrap gap-1">
+                            {temas.map((t) => (
+                              <Badge key={t} variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-normal">
+                                {t}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>
