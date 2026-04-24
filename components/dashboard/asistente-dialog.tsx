@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useTransition } from "react"
+import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
-import { PencilIcon, PlusIcon } from "lucide-react"
+import { PencilIcon, PlusIcon, SchoolIcon } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,91 @@ import { asistenteSaveSchema, type AsistenteSave } from "@/lib/validators/asiste
 import { createAsistenteAction, updateAsistenteAction } from "@/app/actions/asistente"
 import type { Asistente } from "@/db/schema"
 
+function normalize(str: string): string {
+  return str.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+}
+
+function EscuelaCombobox({
+  value,
+  onChange,
+  schools,
+}: {
+  value: string
+  onChange: (v: string) => void
+  schools: string[]
+}) {
+  const [open, setOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onMouseDown(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", onMouseDown)
+    return () => document.removeEventListener("mousedown", onMouseDown)
+  }, [])
+
+  const suggestions = useMemo(() => {
+    const q = normalize(value)
+    if (!q) return schools
+    return schools.filter((s) => normalize(s).includes(q))
+  }, [schools, value])
+
+  const isNew =
+    value.trim() !== "" &&
+    !schools.some((s) => normalize(s) === normalize(value.trim()))
+
+  return (
+    <div ref={containerRef} className="relative">
+      <Input
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setOpen(true) }}
+        onFocus={() => setOpen(true)}
+        placeholder="Escuela Primaria..."
+      />
+      {open && (suggestions.length > 0 || isNew) && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-xl border bg-popover text-popover-foreground shadow-md">
+          <div className="max-h-52 overflow-y-auto py-1">
+            {suggestions.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className={[
+                  "w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center gap-2",
+                  normalize(s) === normalize(value.trim())
+                    ? "bg-muted font-medium"
+                    : "hover:bg-muted/50",
+                ].join(" ")}
+                onMouseDown={(e) => { e.preventDefault(); onChange(s); setOpen(false) }}
+              >
+                <SchoolIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                {s}
+              </button>
+            ))}
+            {isNew && (
+              <button
+                type="button"
+                className="w-full px-3 py-1.5 text-left text-sm transition-colors hover:bg-muted/50 flex items-center gap-2 border-t text-primary"
+                onMouseDown={(e) => { e.preventDefault(); onChange(value.trim()); setOpen(false) }}
+              >
+                <PlusIcon className="size-3.5 shrink-0" />
+                Registrar nueva: &ldquo;{value.trim()}&rdquo;
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 type Props = {
   asistente?: Asistente
   open: boolean
   onOpenChange: (open: boolean) => void
+  schools?: string[]
 }
 
 function formatPhone(digits: string): string {
@@ -67,7 +148,7 @@ function toFormValues(asistente: Asistente): AsistenteSave {
   }
 }
 
-export function AsistenteDialog({ asistente, open, onOpenChange }: Props) {
+export function AsistenteDialog({ asistente, open, onOpenChange, schools = [] }: Props) {
   const isEditing = !!asistente
   const [isPending, startTransition] = useTransition()
 
@@ -138,8 +219,18 @@ export function AsistenteDialog({ asistente, open, onOpenChange }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="escuela">Escuela</Label>
-              <Input id="escuela" {...register("escuela")} placeholder="Escuela Primaria..." />
+              <Label>Escuela</Label>
+              <Controller
+                control={control}
+                name="escuela"
+                render={({ field }) => (
+                  <EscuelaCombobox
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    schools={schools}
+                  />
+                )}
+              />
             </div>
 
             <div className="space-y-1.5">

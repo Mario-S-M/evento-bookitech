@@ -537,6 +537,17 @@ export function AsistentesTable({ data }: Props) {
     return []
   }, [tab, queretaroData, moreliaData])
 
+  const allSchoolLabels = useMemo<string[]>(() => {
+    const seen = new Map<string, string>()
+    for (const a of data) {
+      const raw = a.escuela?.trim() ?? ""
+      if (!raw) continue
+      const key = normalize(raw)
+      if (!seen.has(key)) seen.set(key, toTitleCase(raw))
+    }
+    return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, "es"))
+  }, [data])
+
   const schoolOptions = useMemo<SchoolOption[]>(() => {
     const base = data.filter((a) => matchesTab(a, tab))
     const seen = new Map<string, string>()
@@ -771,6 +782,7 @@ export function AsistentesTable({ data }: Props) {
         asistente={selectedAsistente}
         open={isDialogOpen}
         onOpenChange={handleDialogClose}
+        schools={allSchoolLabels}
       />
     </div>
   )
